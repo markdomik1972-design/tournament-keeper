@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tournament Keeper: новый дизайн</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=PT+Serif:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#0b0b0c;--surface:#131315;--surface-2:#1c1c1f;
+  --border:#2a2a2e;--border-strong:#44444a;
+  --text:#f2f2f0;--muted:#a3a3a8;
+  --accent:#ffd500;--on-accent:#0b0b0c;--danger:#ff7058;
+  --shadow-float:0 12px 32px rgba(0,0,0,.5);
+  --r-sm:6px;--r-md:8px;--r-lg:12px;
+  --yellow:var(--accent);--black:var(--on-accent);--ink:var(--text);
+  --tape:repeating-linear-gradient(-45deg,var(--accent) 0 8px,var(--on-accent) 8px 16px);
+  --font-ui:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --font-display:"PT Serif",Georgia,"Times New Roman",serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+:root[data-theme="light"]{
+  color-scheme:light;
+  --bg:#e9e9ee;--surface:#ffffff;--surface-2:#f1f1f5;
+  --border:#d3d3dc;--border-strong:#a9a9b8;
+  --text:#16162a;--muted:#5d5d73;
+  --accent:#5f4fe0;--on-accent:#ffffff;--danger:#b8270f;
+  --shadow-float:0 12px 32px rgba(20,20,40,.18);
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+*,*::before,*::after{box-sizing:inherit;}
+html,body{height:100%;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-ui);font-size:16px;line-height:1.55;overflow:hidden;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
+.page{height:100%;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--border-strong) transparent;}
+::selection{background:var(--accent);color:var(--on-accent);}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+/* ленты и бегущая строка */
+.tape-edge{height:6px;background:var(--tape);}
+.marquee{background:var(--surface);border-bottom:1px solid var(--border);color:var(--muted);overflow:hidden;white-space:nowrap;font-size:12px;font-weight:500;line-height:1;letter-spacing:.14em;text-transform:uppercase;padding:13px 0;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);}
+.marquee .track{display:inline-flex;animation:run 70s linear infinite;}
+.marquee .track span{display:block;flex:none;}
+@keyframes run{to{transform:translateX(-50%);}}
+
+/* страница */
+main{max-width:760px;margin:0 auto;padding:48px 24px 80px;}
+h1{margin:0;font-family:var(--font-display);font-weight:700;font-size:min(56px,calc((100vw - 48px)/9.2));line-height:1.1;letter-spacing:-.015em;text-align:center;white-space:nowrap;color:var(--text);}
+.lead{max-width:48ch;margin:0 auto 40px;text-align:center;color:var(--muted);font-size:17px;text-wrap:pretty;}
+.trophy{display:block;width:56px;height:auto;margin:16px auto 14px;color:var(--accent);filter:drop-shadow(0 0 8px color-mix(in srgb,var(--accent) 32%,transparent));}
+h2{margin:0 0 24px;font-family:var(--font-display);font-weight:700;font-size:clamp(26px,4.5vw,34px);line-height:1.15;letter-spacing:-.01em;color:var(--text);text-wrap:balance;}
+.sub{margin:36px 0 12px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
+
+/* вкладки */
+.tabs{display:flex;align-items:center;gap:12px;margin:0 0 16px;}
+.tablist{position:relative;display:flex;gap:2px;padding:3px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);}
+.tab{position:relative;z-index:1;font-family:var(--font-ui);font-size:14px;font-weight:500;line-height:1;padding:10px 16px;min-height:40px;border:0;border-radius:var(--r-sm);background:transparent;color:var(--muted);cursor:pointer;transition:background .15s,color .15s;}
+.tab:hover{color:var(--text);background:var(--surface-2);}
+.tab[aria-selected="true"]{background:transparent;color:var(--on-accent);}
+.tab-glider{position:absolute;top:3px;left:0;width:0;height:0;border-radius:var(--r-sm);background:var(--accent);box-shadow:0 0 10px color-mix(in srgb,var(--accent) 28%,transparent);opacity:0;pointer-events:none;z-index:0;transition:transform .4s cubic-bezier(.34,1.25,.5,1),width .4s cubic-bezier(.34,1.25,.5,1),opacity .2s ease;}
+.tab-glider.instant{transition:none;}
+.theme-toggle{margin-left:auto;display:inline-flex;align-items:center;font-family:var(--font-ui);font-size:13px;font-weight:500;line-height:1;padding:11px 14px;border-radius:var(--r-md);background:transparent;color:var(--muted);border:1px solid var(--border);cursor:pointer;transition:color .15s,border-color .15s;}
+.theme-toggle:hover{color:var(--text);border-color:var(--border-strong);}
+.theme-toggle .tt-icon{display:none;}
+.theme-toggle .tt-text::before{content:"Тема: ";color:var(--muted);}
+
+/* пункты главной */
+.stack{display:flex;flex-direction:column;gap:8px;}
+.strip{position:relative;display:flex;align-items:center;gap:16px;width:100%;min-height:64px;padding:16px 20px 16px 26px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--r-md);text-decoration:none;font-family:var(--font-ui);font-size:16px;font-weight:600;line-height:1.25;text-align:left;cursor:pointer;overflow:hidden;transition:border-color .15s,background .15s;}
+.strip::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--tape);}
+.strip::after{content:"\2192";color:var(--muted);font-size:18px;font-weight:400;}
+.strip .label{flex:1;}
+.strip small{font-size:13px;font-weight:400;color:var(--muted);}
+.strip:hover{border-color:var(--border-strong);background:var(--surface-2);}
+.strip:hover::after{color:var(--text);}
+.strip[aria-disabled="true"]{opacity:.45;cursor:not-allowed;background:var(--surface);border-color:var(--border);}
+.strip[aria-disabled="true"]:hover::after{color:var(--muted);}
+#authBtn{background:var(--accent);color:var(--on-accent);border-color:transparent;}
+#authBtn::before{display:none;}
+#authBtn::after{color:var(--on-accent);}
+#authBtn:hover{background:var(--accent);filter:brightness(1.07);}
+
+/* формы */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:20px;margin-bottom:8px;}
+.panel label,.field label{display:block;margin-bottom:8px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);}
+input,select,textarea{width:100%;font-family:var(--font-ui);font-size:16px;line-height:1.4;padding:11px 12px;background:var(--bg);color:var(--text);border:1px solid var(--border-strong);border-radius:var(--r-sm);transition:border-color .15s;}
+input::placeholder,textarea::placeholder{color:var(--muted);opacity:.75;}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:0;border-color:var(--accent);}
+textarea{min-height:84px;resize:vertical;}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid .wide{grid-column:1/-1;}
+.hint{margin:10px 0 0;font-size:13px;color:var(--muted);}
+.msg{min-height:22px;margin:10px 0 0;font-size:14px;font-weight:500;}
+.msg.err{color:var(--danger);}
+.who{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:8px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);}
+.who b{font-family:var(--font-display);font-weight:700;font-size:22px;color:var(--accent);}
+.small-btn{font-family:var(--font-ui);font-size:14px;font-weight:600;line-height:1;padding:12px 18px;border:1px solid transparent;border-radius:var(--r-sm);background:var(--accent);color:var(--on-accent);cursor:pointer;transition:filter .15s;}
+.small-btn:hover{filter:brightness(1.07);}
+.small-btn:disabled{opacity:.5;cursor:not-allowed;}
+.small-btn.ghost{background:transparent;color:var(--text);border-color:var(--border-strong);padding:8px 12px;font-size:13px;font-weight:500;}
+.small-btn.ghost:hover{border-color:var(--text);filter:none;}
+
+/* списки: строки с разделителями */
+.list{display:flex;flex-direction:column;margin-top:8px;border-top:1px solid var(--border-strong);}
+.card{padding:20px 0;border-bottom:1px solid var(--border);}
+.card h3{margin:0 0 6px;font-family:var(--font-display);font-weight:700;font-size:21px;line-height:1.25;color:var(--text);}
+.card .meta{display:flex;flex-wrap:wrap;gap:4px 18px;margin-bottom:6px;font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums;}
+.card p{max-width:60ch;margin:6px 0 0;font-size:15px;opacity:.9;}
+.card .row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:14px;}
+.empty{padding:20px 0;border-bottom:1px solid var(--border);color:var(--muted);}
+.links{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 24px;}
+.chip{display:inline-block;padding:8px 14px;border:1px solid var(--border-strong);border-radius:var(--r-sm);color:var(--text);text-decoration:none;font-size:14px;font-weight:500;transition:background .15s,color .15s,border-color .15s;}
+.chip:hover{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
+.item{padding:16px 0;border-bottom:1px solid var(--border);}
+.item strong{font-weight:600;}
+.item p{max-width:60ch;margin:6px 0 0;font-size:15px;opacity:.9;}
+.item .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+
+/* правая колонка: кошелёк и разделы */
+.rail{display:flex;flex-direction:column;align-items:flex-end;gap:8px;margin:0 0 24px;}
+.wallet{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;white-space:nowrap;width:max-content;max-width:100%;padding:10px 10px 10px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);}
+.wallet span{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);}
+.wallet b{font-family:var(--font-display);font-weight:700;font-size:22px;color:var(--text);white-space:nowrap;font-variant-numeric:tabular-nums;}
+.wallet .small-btn{padding:10px 14px;}
+.sidenav{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px;}
+.side-tab{font-family:var(--font-ui);font-size:14px;font-weight:500;line-height:1.2;text-align:left;min-height:40px;padding:10px 14px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;transition:background .15s,border-color .15s;}
+.side-tab:hover{background:var(--surface-2);border-color:var(--border-strong);}
+.side-tab[aria-selected="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
+
+/* окна */
+dialog{background:var(--surface);color:var(--text);border:1px solid var(--border-strong);border-radius:var(--r-lg);padding:24px;width:min(440px,92vw);box-shadow:var(--shadow-float);}
+dialog::backdrop{background:rgba(0,0,0,.55);}
+dialog h2{font-size:24px;margin-bottom:16px;}
+dialog .field{margin-bottom:14px;}
+dialog .row{display:flex;gap:10px;margin-top:8px;}
+
+/* часы по бокам */
+.clock{position:fixed;top:calc(64px + env(safe-area-inset-top,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));width:96px;display:none;flex-direction:column;align-items:center;padding:12px 0;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);color:var(--accent);pointer-events:none;}
+.clock-left{left:16px;}
+.clock-right{right:16px;}
+.clock .tz{font-size:12px;font-weight:600;line-height:1;letter-spacing:.08em;padding:8px 12px;border-radius:var(--r-sm);background:var(--surface-2);color:var(--text);border:1px solid var(--border);}
+.clock .tz-btn{cursor:pointer;pointer-events:auto;display:inline-flex;align-items:center;gap:6px;min-height:32px;font-family:var(--font-ui);transition:border-color .15s;}
+.clock .tz-btn:hover{border-color:var(--accent);}
+.tz-btn span{pointer-events:none;}
+.tz-btn .arrow{display:inline-block;transition:transform .2s ease;}
+.tz-btn[aria-expanded="true"] .arrow{transform:rotate(180deg);}
+.clock .digits{flex:1;width:100%;display:flex;flex-direction:column;margin-top:10px;min-height:0;padding:0 8px;}
+.clock .d{flex:1 1 0;display:flex;align-items:center;justify-content:center;min-height:0;font-family:var(--font-ui);font-weight:600;font-size:min(10vh,64px);line-height:1;font-variant-numeric:tabular-nums;text-shadow:0 0 6px color-mix(in srgb,var(--yellow) 45%,transparent),0 0 14px color-mix(in srgb,var(--yellow) 22%,transparent);}
+.clock .d.sec{opacity:.5;}
+.clock .bar{flex:none;height:6px;margin:4px 20px;border-radius:2px;background:var(--tape);box-shadow:0 0 7px var(--yellow),0 0 16px color-mix(in srgb,var(--yellow) 55%,transparent);filter:brightness(1.12);}
+.tzmenu{position:fixed;top:calc(64px + env(safe-area-inset-top,0px));left:122px;z-index:20;display:flex;flex-direction:column;gap:2px;padding:4px;max-height:calc(100% - 80px);overflow-y:auto;background:var(--surface);border:1px solid var(--border-strong);border-radius:var(--r-md);box-shadow:var(--shadow-float);}
+.tzmenu button{display:flex;justify-content:space-between;gap:20px;min-width:230px;text-align:left;font-family:var(--font-ui);font-size:14px;font-weight:500;padding:9px 12px;border:0;border-radius:var(--r-sm);background:transparent;color:var(--text);cursor:pointer;}
+.tzmenu button span:last-child{color:var(--muted);font-weight:400;font-variant-numeric:tabular-nums;}
+.tzmenu button:hover{background:var(--surface-2);}
+.tzmenu button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);}
+.tzmenu button[aria-pressed="true"] span:last-child{color:inherit;}
+
+/* поддержка и уведомление */
+.support{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:15;font-family:var(--font-ui);font-size:14px;font-weight:600;line-height:1;min-height:42px;padding:12px 16px;border-radius:var(--r-md);background:var(--surface);color:var(--text);border:1px solid var(--border-strong);cursor:pointer;transition:background .15s,color .15s,border-color .15s;}
+.support:hover{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
+.support .sup-short{display:none;}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:30;max-width:min(92vw,420px);padding:12px 16px;border-radius:var(--r-md);background:var(--text);color:var(--bg);font-size:14px;font-weight:600;text-align:center;box-shadow:var(--shadow-float);}
+footer{max-width:760px;margin:0 auto;padding:0 24px 32px;font-size:13px;color:var(--muted);text-align:center;}
+@keyframes shake{
+  0%,100%{translate:0 0;}
+  8%{translate:-10px 0;} 16%{translate:10px 0;} 24%{translate:-9px 0;} 32%{translate:9px 0;}
+  40%{translate:-7px 0;} 48%{translate:7px 0;} 56%{translate:-5px 0;} 64%{translate:5px 0;}
+  72%{translate:-3px 0;} 80%{translate:3px 0;} 90%{translate:-1px 0;}
+}
+.shake{animation:shake 1.5s linear both;}
+[hidden]{display:none !important;}
+
+@media (min-width:1100px){.clock{display:flex;}.support{right:130px;}}
+@media (min-width:1650px){
+  .rail{position:fixed;top:calc(64px + env(safe-area-inset-top,0px));right:130px;width:280px;margin:0;z-index:5;align-items:stretch;}
+  .wallet{justify-content:space-between;width:auto;}
+  .sidenav{flex-direction:column;flex-wrap:nowrap;}
+}
+@media (max-width:520px){
+  .support .sup-long{display:none;}.support .sup-short{display:inline;}
+  main{padding:28px 16px 64px;}
+  .grid{grid-template-columns:1fr;}
+  .tablist{overflow-x:auto;min-width:0;flex:1 1 auto;scrollbar-width:none;}
+  .tablist::-webkit-scrollbar{display:none;}
+  .tab{flex:none;white-space:nowrap;padding:9px 12px;}
+  .theme-toggle .tt-text::before{content:"";}
+  .theme-toggle{padding:11px 12px;}
+  .strip small{display:none;}
+  .rail{align-items:stretch;}
+  .wallet{width:auto;justify-content:space-between;}
+  .sidenav{flex-direction:column;flex-wrap:nowrap;}
+  .side-tab{width:100%;}
+}
+@media (prefers-reduced-motion:reduce){
+  .marquee .track{animation:none;}
+  .shake{animation:none;}
+  *{transition:none !important;}
+}
+</style>
+</head>
+<body>
+<div class="page" id="page">
+<div class="tape-edge" aria-hidden="true"></div>
+<div class="marquee" aria-hidden="true"><div class="track" id="track"></div></div>
+
+<main>
+  <div class="rail">
+    <div class="wallet" id="wallet"><span>Кошелёк</span><b id="wBal">—</b><button class="small-btn" id="wAdd" type="button">Пополнить</button></div>
+    <div class="sidenav" role="tablist" aria-orientation="vertical" aria-label="Запросы, команды и кабинет">
+      <button class="side-tab" id="tabBtnReq" role="tab" aria-selected="false" aria-controls="tabReq" type="button">Принять запрос на турнир</button>
+      <button class="side-tab" id="tabBtnTeam" role="tab" aria-selected="false" aria-controls="tabTeam" type="button">Добавить в команду</button>
+      <button class="side-tab" id="tabBtnCab" role="tab" aria-selected="false" aria-controls="tabCab" type="button">Личный кабинет</button>
+    </div>
+  </div>
+  <h1>Tournament Keeper</h1>
+  <svg class="trophy" viewBox="0 0 120 140" role="img" aria-label="Кубок" xmlns="http://www.w3.org/2000/svg">
+    <defs><pattern id="hz" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="12" style="fill:var(--black)"/></pattern></defs>
+    <path d="M31 22C6 18 4 60 38 62M89 22C114 18 116 60 82 62" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M30 10h60v38c0 22-13 38-30 38S30 70 30 48z" fill="currentColor"/>
+    <rect x="53" y="84" width="14" height="22" fill="currentColor"/>
+    <path d="M36 106h48l6 14H30z" fill="currentColor"/>
+    <rect x="26" y="120" width="68" height="14" rx="3" fill="currentColor"/>
+    <rect x="26" y="120" width="68" height="14" rx="3" fill="url(#hz)"/>
+  </svg>
+  <p class="lead">Привяжите профиль Dotabuff, и ваши матчи, герои и статистика окажутся в одном клике. Расписание турниров смотрите во вкладке «Турниры».</p>
+
+  <div class="tabs"><div class="tablist" role="tablist" aria-label="Разделы">
+    <button class="tab" id="tabBtnHome" role="tab" aria-selected="true" aria-controls="tabHome" type="button">Главная</button>
+    <button class="tab" id="tabBtnTour" role="tab" aria-selected="false" aria-controls="tabTour" type="button">Турниры</button>
+      <button class="tab" id="tabBtnMine" role="tab" aria-selected="false" aria-controls="tabMine" type="button">Мои турниры</button>
+    </div>
+    <button class="theme-toggle" id="themeBtn" type="button"><span class="tt-icon" aria-hidden="true">☀</span><span class="tt-text">Светлая</span></button>
+  </div>
+
+  <section id="tabHome" role="tabpanel" aria-labelledby="tabBtnHome">
+  <div class="stack">
+    <form id="authForm" novalidate>
+      <div class="panel" id="loginPanel">
+        <label for="profile">Ссылка на профиль Dotabuff или ваш ID</label>
+        <input id="profile" name="profile" type="text" inputmode="url" autocomplete="off" placeholder="https://www.dotabuff.com/players/123456789">
+        <p class="hint">Откройте свой профиль на Dotabuff и скопируйте адрес из строки браузера. Подойдёт и числовой ID игрока.</p>
+      </div>
+      <div class="who" id="whoPanel" hidden>
+        <span>Вы вошли как игрок</span><b id="whoId"></b>
+      </div>
+      <button class="strip rot-a" id="authBtn" type="submit"><span class="label" id="authLabel">Войти через Dotabuff</span></button>
+      <p class="msg" id="msg" role="status" aria-live="polite"></p>
+    </form>
+
+    <a class="strip rot-b" id="btnProfile" href="#" target="_blank" rel="noopener noreferrer" aria-disabled="true"><span class="label">Мой профиль</span><small>Общая статистика</small></a>
+    <a class="strip rot-c" id="btnMatches" href="#" target="_blank" rel="noopener noreferrer" aria-disabled="true"><span class="label">Мои матчи</span><small>История игр</small></a>
+    <a class="strip rot-a" id="btnHeroes" href="#" target="_blank" rel="noopener noreferrer" aria-disabled="true"><span class="label">Мои герои</span><small>Винрейт по героям</small></a>
+  </div>
+  </section>
+
+  <section id="tabTour" role="tabpanel" aria-labelledby="tabBtnTour" hidden>
+    <h2>Турниры</h2>
+    <form id="tourForm" class="panel" hidden novalidate>
+      <div class="grid">
+        <div class="field wide"><label for="tName">Название турнира</label><input id="tName" type="text" maxlength="80" placeholder="Например, Кубок выходного дня"></div>
+        <div class="field"><label for="tDate">Дата</label><input id="tDate" type="date"></div>
+        <div class="field"><label for="tTime">Время начала</label><input id="tTime" type="time"></div>
+        <div class="field"><label for="tFormat">Формат</label>
+          <select id="tFormat"><option>1 на 1</option><option>2 на 2</option><option>5 на 5</option><option>Другой</option></select></div>
+        <div class="field"><label for="tSlots">Количество мест</label><input id="tSlots" type="number" min="2" max="256" value="10"></div>
+        <div class="field wide"><label for="tBy">Кто запросил турнир</label><input id="tBy" type="text" maxlength="60" placeholder="Ник игрока или ссылка на его Dotabuff"></div>
+        <div class="field wide"><label for="tNotes">Правила и заметки</label><textarea id="tNotes" maxlength="400"></textarea></div>
+      </div>
+      <p class="msg" id="tMsg" role="status" aria-live="polite"></p>
+      <button class="small-btn" type="submit">Добавить турнир</button>
+    </form>
+    <p class="msg" id="tStatus" role="status" aria-live="polite"></p>
+    <div class="list" id="tList"></div>
+  </section>
+
+  <section id="tabCab" role="tabpanel" aria-labelledby="tabBtnCab" hidden>
+    <h2>Личный кабинет</h2>
+    <div class="panel" id="cabInfo">Профиль не привязан.</div>
+    <h3 class="sub">Статистика на Dotabuff</h3>
+    <p class="hint">Сайт не может сам забирать данные с Dotabuff, поэтому полная статистика открывается на нём по ссылкам.</p>
+    <div class="links" id="cabLinks"></div>
+    <h3 class="sub">О себе</h3>
+    <form id="cabForm" class="panel" novalidate>
+      <div class="grid">
+        <div class="field"><label for="cabRank">Ранг или MMR</label><input id="cabRank" type="text" maxlength="40" placeholder="Например, Властелин 3"></div>
+        <div class="field"><label for="cabRole">Основная роль</label><select id="cabRole"><option>Керри</option><option>Мид</option><option>Оффлейн</option><option>Поддержка 4</option><option>Поддержка 5</option></select></div>
+        <div class="field wide"><label for="cabContact">Как с вами связаться</label><input id="cabContact" type="text" maxlength="80" placeholder="Telegram или Discord"></div>
+      </div>
+      <p class="hint">Эти данные видит только организатор.</p>
+      <p class="msg" id="cabMsg" role="status" aria-live="polite"></p>
+      <button class="small-btn" type="submit">Сохранить</button>
+    </form>
+  </section>
+
+  <section id="tabMine" role="tabpanel" aria-labelledby="tabBtnMine" hidden>
+    <h2>Мои турниры</h2>
+    <div class="list" id="mineList"></div>
+  </section>
+
+  <section id="tabReq" role="tabpanel" aria-labelledby="tabBtnReq" hidden>
+    <h2>Принять запрос на турнир</h2>
+    <form id="reqForm" class="panel" hidden novalidate>
+      <div class="grid">
+        <div class="field wide"><label for="rqTitle">Какой турнир вы хотите</label><input id="rqTitle" type="text" maxlength="80"></div>
+        <div class="field"><label for="rqFormat">Формат</label><select id="rqFormat"><option>1 на 1</option><option>2 на 2</option><option>5 на 5</option><option>Другой</option></select></div>
+        <div class="field"><label for="rqDate">Желаемая дата</label><input id="rqDate" type="date"></div>
+        <div class="field wide"><label for="rqNote">Пожелания</label><textarea id="rqNote" maxlength="400"></textarea></div>
+      </div>
+      <p class="msg" id="reqMsg" role="status" aria-live="polite"></p>
+      <button class="small-btn" type="submit">Отправить запрос</button>
+    </form>
+    <h3 class="sub">Запросы</h3>
+    <div id="reqList"></div>
+    <div id="depBlock" hidden><h3 class="sub">Заявки на пополнение</h3><div id="depList"></div></div>
+    <div id="supBlock" hidden><h3 class="sub">Сообщения в поддержку</h3><div id="supList"></div></div>
+  </section>
+
+  <section id="tabTeam" role="tabpanel" aria-labelledby="tabBtnTeam" hidden>
+    <h2>Добавить в команду</h2>
+    <form id="teamForm" class="panel" hidden novalidate>
+      <div class="grid">
+        <div class="field wide"><label for="tmName">Название команды</label><input id="tmName" type="text" maxlength="40"></div>
+        <div class="field"><label for="tmNick">Ник игрока</label><input id="tmNick" type="text" maxlength="40"></div>
+        <div class="field"><label for="tmId">Ссылка на Dotabuff или ID</label><input id="tmId" type="text" maxlength="120"></div>
+      </div>
+      <p class="msg" id="tmMsg" role="status" aria-live="polite"></p>
+      <button class="small-btn" type="submit">Добавить в команду</button>
+    </form>
+    <div class="list" id="teamList"></div>
+  </section>
+</main>
+
+<footer>Сайт не связан с Dotabuff и Valve. Привязка хранится только в вашем браузере.</footer>
+<div class="tape-edge" aria-hidden="true"></div>
+</div>
+
+<dialog id="wDlg" aria-labelledby="wTitle">
+  <h2 id="wTitle">Пополнить кошелёк</h2>
+  <form id="wForm" novalidate>
+    <div class="field"><label for="wAmt">Сумма, ₽</label><input id="wAmt" type="number" min="1" step="1" inputmode="numeric"></div>
+    <p class="hint">Оплата пока не подключена: заявка уйдёт организатору, и он зачислит деньги вручную после перевода.</p>
+    <p class="msg" id="wMsg" role="status" aria-live="polite"></p>
+    <div class="row"><button class="small-btn" type="submit">Отправить заявку</button><button class="small-btn ghost" id="wCancel" type="button">Закрыть</button></div>
+  </form>
+</dialog>
+<aside class="clock clock-left" aria-label="Часы"><button class="tz tz-btn" id="tzBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="tzMenu"><span id="tzLabel">МСК</span><span class="arrow" aria-hidden="true">▾</span></button><div class="digits" aria-hidden="true"></div></aside>
+<aside class="clock clock-right" aria-hidden="true"><span class="tz" id="tzRight">МСК</span><div class="digits"></div></aside>
+<div class="tzmenu" id="tzMenu" role="group" aria-label="Часовой пояс" hidden></div>
+<button class="support" id="supBtn" type="button" aria-label="Написать в поддержку"><span class="sup-long">Написать в поддержку</span><span class="sup-short">Поддержка</span></button>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<dialog id="supDlg" aria-labelledby="supTitle">
+  <h2 id="supTitle">Написать в поддержку</h2>
+  <form id="supForm" novalidate>
+    <div class="field"><label for="supText">Ваше сообщение</label><textarea id="supText" maxlength="1000"></textarea></div>
+    <div class="field"><label for="supContact">Как с вами связаться</label><input id="supContact" type="text" maxlength="80" placeholder="Telegram, Discord или почта"></div>
+    <p class="msg" id="supMsg" role="status" aria-live="polite"></p>
+    <div class="row"><button class="small-btn" type="submit">Отправить</button><button class="small-btn ghost" id="supCancel" type="button">Закрыть</button></div>
+  </form>
+</dialog>
+
+<script>
+(function(){
+  /* Бегущая строка: две одинаковые половины, чтобы лента шла без пауз */
+  var track = document.getElementById("track");
+  if(track){
+    var phrases = ["TOURNAMENT KEEPER", "ОСТОРОЖНО: ВЫСОКИЙ MMR", "БУДЬ ГОТОВ К БОЮ", "ДОТА 2. МОЯ ЖИЗНЬ"];
+    var half = "";
+    for(var i = 0; i < 3; i++){
+      phrases.forEach(function(p){ half += p + "\u00a0\u00a0\u25b2\u00a0\u00a0"; });
+    }
+    for(var j = 0; j < 2; j++){
+      var part = document.createElement("span");
+      part.textContent = half;
+      track.appendChild(part);
+    }
+  }
+
+  var KEY = "dotabuff_player_id";
+  var memoryId = null;
+  var STEAM64_BASE = 76561197960265728n;
+
+  var form = document.getElementById("authForm");
+  var input = document.getElementById("profile");
+  var loginPanel = document.getElementById("loginPanel");
+  var whoPanel = document.getElementById("whoPanel");
+  var whoId = document.getElementById("whoId");
+  var authLabel = document.getElementById("authLabel");
+  var msg = document.getElementById("msg");
+  var links = {
+    profile: document.getElementById("btnProfile"),
+    matches: document.getElementById("btnMatches"),
+    heroes: document.getElementById("btnHeroes")
+  };
+
+  function readId(){
+    try { return localStorage.getItem(KEY) || memoryId; } catch(e){ return memoryId; }
+  }
+  function writeId(v){
+    memoryId = v;
+    try { v ? localStorage.setItem(KEY, v) : localStorage.removeItem(KEY); } catch(e){}
+  }
+
+  function parseId(raw){
+    var s = (raw || "").trim();
+    if(!s) return null;
+    var m = s.match(/dotabuff\.com\/players\/(\d+)/i);
+    var digits = m ? m[1] : (/^\d+$/.test(s) ? s : null);
+    if(!digits) return null;
+    if(digits.length >= 16){
+      try { digits = (BigInt(digits) - STEAM64_BASE).toString(); } catch(e){ return null; }
+    }
+    return /^[1-9]\d{3,10}$/.test(digits) ? digits : null;
+  }
+
+  function setLink(el, href){
+    if(href){
+      el.href = href;
+      el.removeAttribute("aria-disabled");
+      el.removeAttribute("tabindex");
+    } else {
+      el.href = "#";
+      el.setAttribute("aria-disabled", "true");
+      el.setAttribute("tabindex", "-1");
+    }
+  }
+
+  function render(){
+    var id = readId();
+    var base = id ? "https://www.dotabuff.com/players/" + id : null;
+    setLink(links.profile, base);
+    setLink(links.matches, base && base + "/matches");
+    setLink(links.heroes, base && base + "/heroes");
+    loginPanel.hidden = !!id;
+    whoPanel.hidden = !id;
+    whoId.textContent = id || "";
+    authLabel.textContent = id ? "Выйти" : "Войти через Dotabuff";
+  }
+
+  function say(text, isError){
+    msg.textContent = text;
+    msg.className = "msg" + (isError ? " err" : "");
+  }
+
+  /* Тряска кнопки входа, если ID не введён */
+  var authBtn = document.getElementById("authBtn");
+  function shakeBtn(){
+    authBtn.classList.remove("shake");
+    void authBtn.offsetWidth;
+    authBtn.classList.add("shake");
+  }
+  authBtn.addEventListener("animationend", function(){ authBtn.classList.remove("shake"); });
+
+  form.addEventListener("submit", function(e){
+    e.preventDefault();
+    if(readId()){
+      writeId(null);
+      input.value = "";
+      say("Вы вышли. Привязку можно сделать заново.", false);
+      render();
+      return;
+    }
+    var id = parseId(input.value);
+    if(!id){
+      say("Не удалось найти ID игрока. Вставьте ссылку вида dotabuff.com/players/123456789 или просто число.", true);
+      input.focus();
+      shakeBtn();
+      return;
+    }
+    writeId(id);
+    say("Профиль привязан. Выберите, что открыть.", false);
+    render();
+  });
+
+  Object.keys(links).forEach(function(k){
+    links[k].addEventListener("click", function(e){
+      if(links[k].getAttribute("aria-disabled") === "true"){
+        e.preventDefault();
+        say("Сначала войдите через Dotabuff.", true);
+      }
+    });
+  });
+
+  render();
+
+  /* Часы по МСК: цифры одна под другой, МСК это UTC+3 без перехода на летнее время */
+  var cells = [];
+  document.querySelectorAll(".clock .digits").forEach(function(box){
+    var list = [];
+    for(var g = 0; g < 3; g++){
+      if(g){ var bar = document.createElement("i"); bar.className = "bar"; box.appendChild(bar); }
+      for(var k = 0; k < 2; k++){
+        var cell = document.createElement("span");
+        cell.className = "d" + (g === 2 ? " sec" : "");
+        box.appendChild(cell);
+        list.push(cell);
+      }
+    }
+    cells.push(list);
+  });
+  var ZONES = [
+    {n: "Калининград", s: "КЛГ", off: 2}, {n: "Москва", s: "МСК", off: 3}, {n: "Самара", s: "САМ", off: 4},
+    {n: "Екатеринбург", s: "ЕКБ", off: 5}, {n: "Омск", s: "ОМС", off: 6}, {n: "Красноярск", s: "КРС", off: 7},
+    {n: "Иркутск", s: "ИРК", off: 8}, {n: "Якутск", s: "ЯКТ", off: 9}, {n: "Владивосток", s: "ВЛД", off: 10},
+    {n: "Магадан", s: "МГД", off: 11}, {n: "Камчатка", s: "КАМ", off: 12}
+  ];
+  var ZONE_KEY = "tk_zone", zone = ZONES[1];
+  try {
+    var savedZone = localStorage.getItem(ZONE_KEY);
+    ZONES.forEach(function(z){ if(z.s === savedZone) zone = z; });
+  } catch(e){}
+  var lastStamp = "";
+  function pad(n){ return (n < 10 ? "0" : "") + n; }
+  function tick(){
+    var m = new Date(Date.now() + zone.off * 3600 * 1000);
+    var stamp = pad(m.getUTCHours()) + pad(m.getUTCMinutes()) + pad(m.getUTCSeconds());
+    if(stamp === lastStamp) return;
+    lastStamp = stamp;
+    cells.forEach(function(list){
+      list.forEach(function(el, idx){ el.textContent = stamp.charAt(idx); });
+    });
+  }
+  tick();
+  setInterval(tick, 250);
+
+  /* Выбор часового пояса России: кнопка у левых часов открывает список */
+  var tzBtn = document.getElementById("tzBtn"), tzMenu = document.getElementById("tzMenu"), tzRight = document.getElementById("tzRight");
+  function paintZone(){
+    document.getElementById("tzLabel").textContent = zone.s;
+    tzRight.textContent = zone.s;
+    tzBtn.setAttribute("aria-label", "Часовой пояс: " + zone.n + ". Выбрать другой");
+    Array.prototype.forEach.call(tzMenu.children, function(b){
+      b.setAttribute("aria-pressed", b.getAttribute("data-s") === zone.s ? "true" : "false");
+    });
+  }
+  function closeZones(){ tzMenu.hidden = true; tzBtn.setAttribute("aria-expanded", "false"); }
+  ZONES.forEach(function(z){
+    var b = document.createElement("button");
+    b.type = "button";
+    b.setAttribute("data-s", z.s);
+    var name = document.createElement("span");
+    name.textContent = z.n;
+    var off = document.createElement("span");
+    off.textContent = "UTC+" + z.off;
+    b.appendChild(name);
+    b.appendChild(off);
+    b.addEventListener("click", function(){
+      zone = z;
+      lastStamp = "";
+      try { localStorage.setItem(ZONE_KEY, z.s); } catch(e){}
+      paintZone();
+      tick();
+      closeZones();
+      tzBtn.focus();
+    });
+    tzMenu.appendChild(b);
+  });
+  tzBtn.addEventListener("click", function(){
+    var willOpen = tzMenu.hidden;
+    tzMenu.hidden = !willOpen;
+    tzBtn.setAttribute("aria-expanded", willOpen ? "true" : "false");
+  });
+  document.addEventListener("click", function(e){
+    if(!tzMenu.hidden && !tzMenu.contains(e.target) && !tzBtn.contains(e.target)) closeZones();
+  });
+  document.addEventListener("keydown", function(e){
+    if(e.key === "Escape" && !tzMenu.hidden){ closeZones(); tzBtn.focus(); }
+  });
+  paintZone();
+
+  /* Тема: «Авто» (днём светлая, ночью тёмная по часам устройства), либо светлая или тёмная вручную */
+  var THEME_KEY = "tk_theme";
+  var DAY_FROM = 7, DAY_TO = 19;
+  var root = document.documentElement;
+  var themeBtn = document.getElementById("themeBtn");
+  var themeMode = "auto";
+  var THEME_NAMES = {auto: "Авто", light: "Светлая", dark: "Тёмная"};
+  var THEME_ICONS = {auto: "\u25d0", light: "\u2600", dark: "\u263e"};
+  function autoTheme(){
+    var h = new Date().getHours();
+    return (h >= DAY_FROM && h < DAY_TO) ? "light" : "dark";
+  }
+  function applyTheme(){
+    var eff = themeMode === "auto" ? autoTheme() : themeMode;
+    if(eff === "light"){ root.setAttribute("data-theme", "light"); } else { root.removeAttribute("data-theme"); }
+    themeBtn.querySelector(".tt-icon").textContent = THEME_ICONS[themeMode];
+    themeBtn.querySelector(".tt-text").textContent = THEME_NAMES[themeMode];
+    var now = themeMode === "auto" ? (eff === "light" ? " (сейчас светлая)" : " (сейчас тёмная)") : "";
+    themeBtn.setAttribute("aria-label", "Тема: " + THEME_NAMES[themeMode].toLowerCase() + now + ". Нажмите, чтобы переключить");
+  }
+  try {
+    var savedTheme = localStorage.getItem(THEME_KEY);
+    if(savedTheme === "light" || savedTheme === "dark") themeMode = savedTheme;
+  } catch(e){}
+  applyTheme();
+  themeBtn.addEventListener("click", function(){
+    themeMode = themeMode === "auto" ? "light" : (themeMode === "light" ? "dark" : "auto");
+    try { localStorage.setItem(THEME_KEY, themeMode); } catch(e){}
+    applyTheme();
+  });
+  setInterval(function(){ if(themeMode === "auto") applyTheme(); }, 60000);
+
+  /* Вкладки */
+  var tabs = {
+    home: {btn: document.getElementById("tabBtnHome"), panel: document.getElementById("tabHome")},
+    tour: {btn: document.getElementById("tabBtnTour"), panel: document.getElementById("tabTour")}
+  };
+  /* Скользящая подсветка активной вкладки */
+  var tabList = document.querySelector(".tablist");
+  var glider = document.createElement("span");
+  glider.className = "tab-glider";
+  glider.setAttribute("aria-hidden", "true");
+  tabList.insertBefore(glider, tabList.firstChild);
+  function moveGlider(instant){
+    var cur = tabList.querySelector('.tab[aria-selected="true"]');
+    if(instant) glider.classList.add("instant");
+    if(!cur){
+      glider.style.opacity = "0";
+    } else {
+      glider.style.opacity = "1";
+      glider.style.width = cur.offsetWidth + "px";
+      glider.style.height = cur.offsetHeight + "px";
+      glider.style.top = cur.offsetTop + "px";
+      glider.style.transform = "translateX(" + cur.offsetLeft + "px)";
+    }
+    if(instant){ void glider.offsetWidth; glider.classList.remove("instant"); }
+  }
+  moveGlider(true);
+  window.addEventListener("resize", function(){ moveGlider(true); });
+  if(document.fonts && document.fonts.ready){ document.fonts.ready.then(function(){ moveGlider(true); }); }
+
+  function showTab(name){
+    Object.keys(tabs).forEach(function(k){
+      var on = k === name;
+      tabs[k].btn.setAttribute("aria-selected", on ? "true" : "false");
+      tabs[k].panel.hidden = !on;
+    });
+    if(name === "tour") initTournaments();
+    if(hooks[name]) hooks[name]();
+    if(name === "home" || name === "tour" || name === "mine"){
+      var anchor = document.querySelector(".tabs");
+      var calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if(anchor && anchor.scrollIntoView) anchor.scrollIntoView({behavior: calm ? "auto" : "smooth", block: "start"});
+    }
+    moveGlider();
+  }
+  tabs.home.btn.addEventListener("click", function(){ showTab("home"); });
+  tabs.tour.btn.addEventListener("click", function(){ showTab("tour"); });
+
+  /* Турниры */
+  var tList = document.getElementById("tList");
+  var tStatus = document.getElementById("tStatus");
+  var tForm = document.getElementById("tourForm");
+  var tMsg = document.getElementById("tMsg");
+  var started = false, db = null, isAdmin = false, rows = [], armed = null;
+
+  function el(tag, cls, text){
+    var n = document.createElement(tag);
+    if(cls) n.className = cls;
+    if(text != null) n.textContent = text;
+    return n;
+  }
+  function fmtDate(d, t){
+    if(!d) return "Дата не указана";
+    var parts = d.split("-");
+    var out = parts.length === 3 ? parts[2] + "." + parts[1] + "." + parts[0] : d;
+    return t ? out + ", " + t : out;
+  }
+
+  function draw(){
+    tList.textContent = "";
+    if(!rows.length){
+      tList.appendChild(el("div", "empty", "Прямо сейчас нету никаких турниров."));
+      return;
+    }
+    rows.forEach(function(r){
+      var c = el("article", "card");
+      c.appendChild(el("h3", null, r.name || "Без названия"));
+      var meta = el("div", "meta");
+      meta.appendChild(el("span", null, fmtDate(r.date, r.time)));
+      meta.appendChild(el("span", null, "Формат: " + (r.format || "не указан")));
+      meta.appendChild(el("span", null, "Мест: " + (r.slots || "не указано")));
+      c.appendChild(meta);
+      if(r.requestedBy) c.appendChild(el("p", null, "Запросил: " + r.requestedBy));
+      if(r.notes) c.appendChild(el("p", null, r.notes));
+      if(isAdmin){
+        var row = el("div", "row");
+        var del = el("button", "small-btn ghost", armed === r.id ? "Точно удалить?" : "Удалить");
+        del.type = "button";
+        del.addEventListener("click", function(){
+          if(armed !== r.id){ armed = r.id; draw(); return; }
+          armed = null;
+          db.collection("tournaments").doc(r.id).delete().catch(function(){
+            tStatus.textContent = "Не удалось удалить турнир. Попробуйте ещё раз.";
+            tStatus.className = "msg err";
+          });
+        });
+        row.appendChild(del);
+        c.appendChild(row);
+      }
+      addJoin(c, r);
+      tList.appendChild(c);
+    });
+  }
+
+  function initTournaments(){
+    if(started) return;
+    started = true;
+    tStatus.textContent = "Загружаю турниры…";
+    getCtx().then(function(c){
+      if(!c){
+        tStatus.textContent = "Чтобы видеть турниры, войдите в claude.ai и откройте страницу снова.";
+        tStatus.className = "msg err";
+        return;
+      }
+      db = c.db;
+      isAdmin = c.admin;
+      tForm.hidden = !isAdmin;
+      tStatus.className = "msg";
+      tStatus.textContent = c.local ? "Локальный режим: турниры сохраняются только в этом браузере и не видны другим игрокам." : "";
+      db.collection("tournaments").onSnapshot(function(snap){
+        rows = snap.docs.map(function(d){ var v = d.data() || {}; v.id = d.id; return v; });
+        rows.sort(function(a,b){ return ((a.date||"9999") + (a.time||"")).localeCompare((b.date||"9999") + (b.time||"")); });
+        draw();
+      }, function(){
+        tStatus.textContent = "Не удалось загрузить турниры.";
+        tStatus.className = "msg err";
+      });
+    });
+  }
+
+  tForm.addEventListener("submit", function(e){
+    e.preventDefault();
+    var name = document.getElementById("tName").value.trim();
+    var date = document.getElementById("tDate").value;
+    if(!name || !date){
+      tMsg.textContent = "Укажите название и дату турнира.";
+      tMsg.className = "msg err";
+      return;
+    }
+    var slots = parseInt(document.getElementById("tSlots").value, 10);
+    db.collection("tournaments").add({
+      name: name,
+      date: date,
+      time: document.getElementById("tTime").value,
+      format: document.getElementById("tFormat").value,
+      slots: isNaN(slots) ? null : slots,
+      requestedBy: document.getElementById("tBy").value.trim(),
+      notes: document.getElementById("tNotes").value.trim(),
+      createdAt: new Date().toISOString()
+    }).then(function(){
+      tForm.reset();
+      tMsg.textContent = "Турнир добавлен.";
+      tMsg.className = "msg";
+    }).catch(function(){
+      tMsg.textContent = "Не удалось сохранить турнир. Проверьте, что у вас есть права редактора.";
+      tMsg.className = "msg err";
+    });
+  });
+
+  /* ===== Общее: доступ к базе, кошелёк, новые вкладки ===== */
+  var $ = function(id){ return document.getElementById(id); };
+  var cx = null, myIds = [], hooks = {}, ctxPromise = null;
+  /* Локальная база: те же вызовы, что у общей, но данные лежат только в этом браузере */
+  function localDb(){
+    var KEY = "tk_localdb", subs = [];
+    function load(){ try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch(e){ return {}; } }
+    function save(d){
+      try { localStorage.setItem(KEY, JSON.stringify(d)); } catch(e){}
+      subs.slice().forEach(function(f){ f(); });
+    }
+    function rid(){ return Math.random().toString(36).slice(2, 12); }
+    function snapOf(path, data){
+      return {id: path.split("/").pop(), exists: data !== undefined, data: function(){ return data; }};
+    }
+    function listen(fn){
+      subs.push(fn);
+      fn();
+      return function(){ subs = subs.filter(function(x){ return x !== fn; }); };
+    }
+    function docRef(path){
+      return {
+        id: path.split("/").pop(), path: path,
+        get: function(){ return Promise.resolve(snapOf(path, load()[path])); },
+        set: function(v){ var d = load(); d[path] = JSON.parse(JSON.stringify(v)); save(d); return Promise.resolve(); },
+        delete: function(){ var d = load(); delete d[path]; save(d); return Promise.resolve(); },
+        onSnapshot: function(next){ return listen(function(){ next(snapOf(path, load()[path])); }); }
+      };
+    }
+    function colRef(path){
+      function snap(){
+        var d = load(), pre = path + "/";
+        var docs = Object.keys(d).filter(function(k){ return k.indexOf(pre) === 0 && k.indexOf("/", pre.length) < 0; })
+          .map(function(k){ return snapOf(k, d[k]); });
+        return {docs: docs, size: docs.length, empty: !docs.length};
+      }
+      return {
+        path: path,
+        doc: function(id){ return docRef(path + "/" + (id || rid())); },
+        add: function(v){ var r = docRef(path + "/" + rid()); return r.set(v).then(function(){ return r; }); },
+        get: function(){ return Promise.resolve(snap()); },
+        onSnapshot: function(next){ return listen(function(){ next(snap()); }); }
+      };
+    }
+    return {doc: docRef, collection: colRef};
+  }
+
+  function getCtx(){
+    if(ctxPromise) return ctxPromise;
+    ctxPromise = (!window.claude || !claude.use) ? Promise.resolve({db: localDb(), admin: true, uid: "local", local: true}) :
+      Promise.all([claude.use("db"), claude.use("user")]).then(function(r){
+        if(!r[0] || !r[1]) return null;
+        var admin = false;
+        try { admin = !!(r[1].canEdit() || r[1].isOwner()); } catch(e){}
+        return Promise.resolve(r[1].id()).then(function(id){ return {db: r[0], admin: admin, uid: String(id)}; });
+      }).catch(function(){ return null; });
+    return ctxPromise;
+  }
+  function note(node, text, bad){ node.textContent = text; node.className = "msg" + (bad ? " err" : ""); }
+  function money(n){ return (Number(n) || 0).toLocaleString("ru-RU") + " ₽"; }
+  function emptyBox(text){ return el("div", "empty", text); }
+  function actBtn(label, fn){
+    var b = el("button", "small-btn ghost", label);
+    b.type = "button";
+    b.addEventListener("click", function(){
+      b.disabled = true;
+      fn().then(function(){ hooks.req(); }).catch(function(){ b.disabled = false; b.textContent = "Ошибка, ещё раз"; });
+    });
+    return b;
+  }
+  function byDate(a, b){ return ((a.date || "9999") + (a.time || "")).localeCompare((b.date || "9999") + (b.time || "")); }
+
+  /* Запись на турнир (кнопка на карточке во вкладке «Турниры») */
+  function addJoin(card, r){
+    if(!cx) return;
+    var joined = myIds.indexOf(r.id) >= 0;
+    var b = el("button", "small-btn ghost", joined ? "Выйти из турнира" : "Записаться");
+    b.type = "button";
+    b.addEventListener("click", function(){
+      var next = myIds.filter(function(x){ return x !== r.id; });
+      if(!joined) next.push(r.id);
+      cx.db.doc("entries/" + cx.uid).set({ids: next}).then(function(){ myIds = next; draw(); })
+        .catch(function(){ note(tStatus, "Не удалось изменить запись. Попробуйте ещё раз.", true); });
+    });
+    var row = el("div", "row");
+    row.appendChild(b);
+    card.appendChild(row);
+  }
+
+  /* Кошелёк */
+  var wDlg = $("wDlg"), wMsg = $("wMsg");
+  $("wAdd").addEventListener("click", function(){ note(wMsg, "", false); wDlg.showModal(); });
+  $("wCancel").addEventListener("click", function(){ wDlg.close(); });
+  $("wForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    var amt = Math.round(Number($("wAmt").value));
+    if(!cx){ note(wMsg, "Чтобы пополнить кошелёк, войдите в claude.ai и откройте страницу снова.", true); return; }
+    if(!(amt > 0) || amt > 1000000){ note(wMsg, "Укажите сумму от 1 до 1 000 000 ₽.", true); return; }
+    var ref = cx.db.doc("deposits/" + cx.uid);
+    ref.get().then(function(sn){
+      var items = (sn.exists && sn.data().items) || [];
+      items.push({id: Date.now().toString(36), amount: amt, status: "pending", createdAt: new Date().toISOString(), dotabuff: readId() || ""});
+      return ref.set({items: items});
+    }).then(function(){
+      $("wAmt").value = "";
+      note(wMsg, "Заявка отправлена организатору. Баланс изменится после зачисления.", false);
+    }).catch(function(){ note(wMsg, "Не удалось отправить заявку. Попробуйте ещё раз.", true); });
+  });
+
+  getCtx().then(function(c){
+    cx = c;
+    if(!c) return;
+    c.db.doc("wallets/" + c.uid).onSnapshot(function(sn){ $("wBal").textContent = money(sn.exists ? sn.data().balance : 0); });
+    c.db.doc("entries/" + c.uid).get().then(function(sn){
+      myIds = (sn.exists && sn.data().ids) || [];
+      if(started) draw();
+    }).catch(function(){});
+  });
+
+  /* Вкладки */
+  [["cab","Cab"],["mine","Mine"],["req","Req"],["team","Team"]].forEach(function(p){
+    tabs[p[0]] = {btn: $("tabBtn" + p[1]), panel: $("tab" + p[1])};
+    tabs[p[0]].btn.addEventListener("click", function(){ showTab(p[0]); });
+  });
+
+  /* Личный кабинет */
+  var DB_PAGES = [["Обзор",""],["Матчи","/matches"],["Герои","/heroes"],["Союзники","/peers"],["Предметы","/items"],["Рекорды","/records"],["Активность","/activity"],["Тренды","/trends"]];
+  hooks.cab = function(){
+    var id = readId(), box = $("cabLinks");
+    box.textContent = "";
+    if(!id){ $("cabInfo").textContent = "Профиль не привязан. Войдите через Dotabuff на вкладке «Главная»."; return; }
+    $("cabInfo").textContent = "Ваш ID на Dotabuff: " + id;
+    DB_PAGES.forEach(function(pg){
+      var a = el("a", "chip", pg[0]);
+      a.href = "https://www.dotabuff.com/players/" + id + pg[1];
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      box.appendChild(a);
+    });
+    getCtx().then(function(c){
+      if(!c) return;
+      c.db.doc("players/" + c.uid).get().then(function(sn){
+        var d = sn.exists ? sn.data() : {};
+        $("cabRank").value = d.rank || "";
+        $("cabRole").value = d.role || "Керри";
+        $("cabContact").value = d.contact || "";
+      }).catch(function(){});
+    });
+  };
+  $("cabForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    if(!cx){ note($("cabMsg"), "Чтобы сохранить данные, войдите в claude.ai и откройте страницу снова.", true); return; }
+    cx.db.doc("players/" + cx.uid).set({dotabuffId: readId() || "", rank: $("cabRank").value.trim(), role: $("cabRole").value, contact: $("cabContact").value.trim()})
+      .then(function(){ note($("cabMsg"), "Данные сохранены.", false); })
+      .catch(function(){ note($("cabMsg"), "Не удалось сохранить данные.", true); });
+  });
+
+  /* Мои турниры */
+  hooks.mine = function(){
+    var box = $("mineList");
+    box.textContent = "";
+    getCtx().then(function(c){
+      if(!c){ box.appendChild(emptyBox("Войдите в claude.ai, чтобы видеть свои турниры.")); return; }
+      return Promise.all([c.db.doc("entries/" + c.uid).get(), c.db.collection("tournaments").get()]).then(function(r){
+        var ids = (r[0].exists && r[0].data().ids) || [];
+        var list = r[1].docs.filter(function(d){ return ids.indexOf(d.id) >= 0; }).map(function(d){ var v = d.data(); v.id = d.id; return v; }).sort(byDate);
+        if(!list.length){ box.appendChild(emptyBox("Вы пока не записаны ни на один турнир. Выберите его во вкладке «Турниры».")); return; }
+        list.forEach(function(t){
+          var card = el("article", "card");
+          card.appendChild(el("h3", null, t.name || "Без названия"));
+          var meta = el("div", "meta");
+          meta.appendChild(el("span", null, fmtDate(t.date, t.time)));
+          meta.appendChild(el("span", null, "Формат: " + (t.format || "не указан")));
+          card.appendChild(meta);
+          box.appendChild(card);
+        });
+      });
+    }).catch(function(){ box.appendChild(emptyBox("Не удалось загрузить турниры.")); });
+  };
+
+  /* Запросы на турнир и заявки на пополнение */
+  var ST = {"new": "Ожидает ответа", accepted: "Принят", rejected: "Отклонён", pending: "Ожидает зачисления", confirmed: "Зачислено"};
+  function reqItem(it, withRow){
+    var n = el("div", "item");
+    n.appendChild(el("strong", null, it.title));
+    n.appendChild(el("div", "hint", "Формат: " + (it.format || "любой") + ". Дата: " + (it.date || "не указана") + (it.dotabuff ? ". Dotabuff: " + it.dotabuff : "") + "."));
+    if(it.note) n.appendChild(el("p", null, it.note));
+    n.appendChild(withRow ? el("div", "row") : el("div", "hint", "Статус: " + (ST[it.status] || it.status)));
+    return n;
+  }
+  function saveStatus(c, coll, uid, items, id, st){
+    items.forEach(function(x){ if(x.id === id) x.status = st; });
+    return c.db.doc(coll + "/" + uid).set({items: items});
+  }
+  hooks.req = function(){
+    var box = $("reqList"), dep = $("depList");
+    box.textContent = "";
+    dep.textContent = "";
+    $("depBlock").hidden = true;
+    $("supBlock").hidden = true;
+    $("supList").textContent = "";
+    getCtx().then(function(c){
+      if(!c){ box.appendChild(emptyBox("Войдите в claude.ai, чтобы отправлять и принимать запросы.")); return; }
+      $("reqForm").hidden = false;
+      if(!c.admin){
+        return c.db.doc("requests/" + c.uid).get().then(function(sn){
+          var items = (sn.exists && sn.data().items) || [];
+          items.forEach(function(it){ box.appendChild(reqItem(it, false)); });
+          if(!items.length) box.appendChild(emptyBox("Вы ещё не отправляли запросов."));
+        });
+      }
+      $("depBlock").hidden = false;
+      $("supBlock").hidden = false;
+      loadSupport(c);
+      c.db.collection("requests").get().then(function(snap){
+        snap.docs.forEach(function(d){
+          var items = d.data().items || [];
+          items.forEach(function(it){
+            if(it.status !== "new") return;
+            var node = reqItem(it, true), row = node.querySelector(".row");
+            row.appendChild(actBtn("Принять", function(){
+              return c.db.collection("tournaments").add({name: it.title, date: it.date || "", time: "", format: it.format || "", slots: 10, requestedBy: it.dotabuff ? "Dotabuff " + it.dotabuff : "", notes: it.note || "", createdAt: new Date().toISOString()})
+                .then(function(){ return saveStatus(c, "requests", d.id, items, it.id, "accepted"); });
+            }));
+            row.appendChild(actBtn("Отклонить", function(){ return saveStatus(c, "requests", d.id, items, it.id, "rejected"); }));
+            box.appendChild(node);
+          });
+        });
+        if(!box.children.length) box.appendChild(emptyBox("Новых запросов нет."));
+      });
+      c.db.collection("deposits").get().then(function(snap){
+        snap.docs.forEach(function(d){
+          var items = d.data().items || [];
+          items.forEach(function(it){
+            if(it.status !== "pending") return;
+            var n = el("div", "item");
+            n.appendChild(el("strong", null, money(it.amount)));
+            n.appendChild(el("div", "hint", it.dotabuff ? "Dotabuff: " + it.dotabuff : "Dotabuff не указан"));
+            var row = el("div", "row");
+            row.appendChild(actBtn("Зачислить", function(){
+              var wref = c.db.doc("wallets/" + d.id);
+              return saveStatus(c, "deposits", d.id, items, it.id, "confirmed").then(function(){ return wref.get(); })
+                .then(function(sn){ return wref.set({balance: ((sn.exists && Number(sn.data().balance)) || 0) + Number(it.amount)}); });
+            }));
+            row.appendChild(actBtn("Отклонить", function(){ return saveStatus(c, "deposits", d.id, items, it.id, "rejected"); }));
+            n.appendChild(row);
+            dep.appendChild(n);
+          });
+        });
+        if(!dep.children.length) dep.appendChild(emptyBox("Новых заявок на пополнение нет."));
+      });
+    }).catch(function(){ box.appendChild(emptyBox("Не удалось загрузить запросы.")); });
+  };
+  $("reqForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    var title = $("rqTitle").value.trim();
+    if(!cx || !title){ note($("reqMsg"), "Опишите, какой турнир вы хотите.", true); return; }
+    var ref = cx.db.doc("requests/" + cx.uid);
+    ref.get().then(function(sn){
+      var items = (sn.exists && sn.data().items) || [];
+      items.push({id: Date.now().toString(36), title: title, format: $("rqFormat").value, date: $("rqDate").value, note: $("rqNote").value.trim(), status: "new", dotabuff: readId() || "", createdAt: new Date().toISOString()});
+      return ref.set({items: items});
+    }).then(function(){
+      $("reqForm").reset();
+      note($("reqMsg"), "Запрос отправлен организатору.", false);
+      hooks.req();
+    }).catch(function(){ note($("reqMsg"), "Не удалось отправить запрос.", true); });
+  });
+
+  /* Команды */
+  hooks.team = function(){
+    var box = $("teamList");
+    box.textContent = "";
+    getCtx().then(function(c){
+      if(!c){ box.appendChild(emptyBox("Войдите в claude.ai, чтобы видеть команды.")); return; }
+      $("teamForm").hidden = !c.admin;
+      return c.db.collection("teams").get().then(function(snap){
+        if(!snap.docs.length){ box.appendChild(emptyBox("Команд пока нет.")); return; }
+        snap.docs.forEach(function(d){
+          var t = d.data(), members = t.members || [];
+          var card = el("article", "card");
+          card.appendChild(el("h3", null, t.name));
+          members.forEach(function(m){
+            var row = el("div", "row");
+            var a = el("a", "chip", m.nick);
+            a.href = "https://www.dotabuff.com/players/" + m.id;
+            a.target = "_blank";
+            a.rel = "noopener noreferrer";
+            row.appendChild(a);
+            if(c.admin){
+              var rm = el("button", "small-btn ghost", "Убрать");
+              rm.type = "button";
+              rm.addEventListener("click", function(){
+                c.db.doc("teams/" + d.id).set({name: t.name, members: members.filter(function(x){ return x.id !== m.id; })}).then(hooks.team);
+              });
+              row.appendChild(rm);
+            }
+            card.appendChild(row);
+          });
+          box.appendChild(card);
+        });
+      });
+    }).catch(function(){ box.appendChild(emptyBox("Не удалось загрузить команды.")); });
+  };
+  $("teamForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    var name = $("tmName").value.trim(), nick = $("tmNick").value.trim(), pid = parseId($("tmId").value);
+    if(!cx || !name || !nick || !pid){ note($("tmMsg"), "Укажите команду, ник игрока и ссылку на Dotabuff или ID.", true); return; }
+    cx.db.collection("teams").get().then(function(snap){
+      var hit = snap.docs.filter(function(d){ return (d.data().name || "").toLowerCase() === name.toLowerCase(); })[0];
+      var members = hit ? (hit.data().members || []) : [];
+      if(members.some(function(x){ return x.id === pid; })) throw new Error("dup");
+      members.push({nick: nick, id: pid});
+      return hit ? cx.db.doc("teams/" + hit.id).set({name: hit.data().name, members: members}) : cx.db.collection("teams").add({name: name, members: members});
+    }).then(function(){
+      $("tmNick").value = "";
+      $("tmId").value = "";
+      note($("tmMsg"), "Игрок добавлен в команду.", false);
+      hooks.team();
+    }).catch(function(err){ note($("tmMsg"), err && err.message === "dup" ? "Этот игрок уже в команде." : "Не удалось добавить игрока.", true); });
+  });
+
+  /* Поддержка: игрок пишет сообщение, организатор читает его во вкладке запросов */
+  function loadSupport(c){
+    var list = $("supList");
+    c.db.collection("support").get().then(function(snap){
+      snap.docs.forEach(function(d){
+        var items = d.data().items || [];
+        items.forEach(function(it){
+          if(it.status !== "new") return;
+          var n = el("div", "item");
+          n.appendChild(el("p", null, it.text));
+          n.appendChild(el("div", "hint", "Связь: " + (it.contact || "не указана") + (it.dotabuff ? ". Dotabuff: " + it.dotabuff : "") + "."));
+          var row = el("div", "row");
+          row.appendChild(actBtn("Прочитано", function(){ return saveStatus(c, "support", d.id, items, it.id, "closed"); }));
+          n.appendChild(row);
+          list.appendChild(n);
+        });
+      });
+      if(!list.children.length) list.appendChild(emptyBox("Новых сообщений нет."));
+    }).catch(function(){ list.appendChild(emptyBox("Не удалось загрузить сообщения.")); });
+  }
+  var toastTimer = null;
+  function showToast(text){
+    var t = $("toast");
+    t.textContent = text;
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.hidden = true; }, 3500);
+  }
+  var supDlg = $("supDlg"), supMsg = $("supMsg");
+  $("supBtn").addEventListener("click", function(){ note(supMsg, "", false); supDlg.showModal(); });
+  $("supCancel").addEventListener("click", function(){ supDlg.close(); });
+  $("supForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    var text = $("supText").value.trim();
+    if(!text){ note(supMsg, "Напишите, чем вам помочь.", true); return; }
+    if(!cx){ note(supMsg, "Чтобы написать в поддержку, войдите в claude.ai и откройте страницу снова.", true); return; }
+    var ref = cx.db.doc("support/" + cx.uid);
+    ref.get().then(function(sn){
+      var items = (sn.exists && sn.data().items) || [];
+      items.push({id: Date.now().toString(36), text: text, contact: $("supContact").value.trim(), dotabuff: readId() || "", status: "new", createdAt: new Date().toISOString()});
+      return ref.set({items: items});
+    }).then(function(){
+      $("supText").value = "";
+      note(supMsg, "", false);
+      supDlg.close();
+      showToast("Сообщение отправлено. Организатор его увидит.");
+    }).catch(function(){ note(supMsg, "Не удалось отправить сообщение. Попробуйте ещё раз.", true); });
+  });
+})();
+</script>
+</body>
+</html>
